@@ -39,10 +39,7 @@
     <ClInclude Include="TAcceptor.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
-    <ClInclude Include="DatabaseManager.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="SQLStmt.h">
+    <ClInclude Include="Lock.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -71,10 +68,7 @@
     <ClCompile Include="TAcceptor.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="DatabaseManager.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="SQLStmt.cpp">
+    <ClCompile Include="Lock.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
