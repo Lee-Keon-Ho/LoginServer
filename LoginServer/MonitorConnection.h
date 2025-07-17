@@ -2,29 +2,29 @@
 #include "../NetCore/session.h"
 #include "../NetCore/Thread.h"
 
-class CFieldConnection;
+class CMoniterConnection;
 
-struct overlapped_field : WSAOVERLAPPED
+struct overlapped_monitor : WSAOVERLAPPED
 {
-	CFieldConnection* fieldConnector;
+	CMoniterConnection* Connector;
 	int flag;
 };
 
-class CFieldConnection : public CThread
+class CMoniterConnection : public CThread
 {
 public:
-	static CFieldConnection* GetInstance()
+	static CMoniterConnection* GetInstance()
 	{
-		static CFieldConnection instance;
+		static CMoniterConnection instance;
 		return &instance;
 	}
 
 private:
-	CFieldConnection();
-	~CFieldConnection();
+	CMoniterConnection();
+	~CMoniterConnection();
 
 private:
-	ACCEPT_SOCKET_INFO m_field;
+	ACCEPT_SOCKET_INFO m_info;
 	std::deque<LKH::sharedPtr<PACKET>>	m_sendQue;
 	WSABUF m_dataBuf_send;
 	WSABUF m_dataBuf_recv;
@@ -33,12 +33,10 @@ private:
 
 	HANDLE m_iocp;
 
-	overlapped_field m_overlapped_send;
-	overlapped_field m_overlapped_recv;
+	overlapped_monitor m_overlapped_send;
+	overlapped_monitor m_overlapped_recv;
 
 	std::unique_ptr<CRingBuffer>	m_pRingBuffer;
-
-	int i = 0;
 public:
 	bool Start();
 	void RunLoop() override;

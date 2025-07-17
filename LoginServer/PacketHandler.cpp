@@ -4,185 +4,111 @@
 #include "ODBCManager.h"
 #include "PacketType.h"
 #include "FieldConnection.h"
+#include "UserManager.h"
 #include <assert.h>
 
 CPacketHandler::CPacketHandler()
 {
-	m_lpfp = new tFunc[FUNC_MAX];
-
-	m_lpfp[CS_PT_TEST] = &CPacketHandler::PT_C2LS_Test;
-	m_lpfp[CS_PT_LOGIN] = &CPacketHandler::PT_C2LS_Login;
-	m_lpfp[CS_PT_CHECK_ID] = &CPacketHandler::PT_C2LS_Check_ID;
-	m_lpfp[CS_PT_CREATE_ACCOUNT] = &CPacketHandler::PT_C2LS_CreateAccount;
-	m_lpfp[CS_PT_CREATE_CHARACTER] = &CPacketHandler::PT_C2LS_CreateCharacter;
-	m_lpfp[CS_PT_DELETE_CHARACTER] = &CPacketHandler::PT_C2LS_DeleteCharacter;
-	m_lpfp[CS_PT_IN_FIELD] = &CPacketHandler::PT_C2LS_In_Field;
-	m_lpfp[CS_PT_DOUBLE_CHECK] = &CPacketHandler::PT_C2LS_DoubleCheck;
+	m_lpfp.reserve(static_cast<u_short>(ePacketType::CS_PT_MAX));
+	m_lpfp.push_back(&CPacketHandler::PT_C2LS_Test);
+	m_lpfp.push_back(&CPacketHandler::PT_C2LS_Login);
+	m_lpfp.push_back(&CPacketHandler::PT_C2LS_Check_ID);
+	m_lpfp.push_back(&CPacketHandler::PT_C2LS_CreateAccount);
+	m_lpfp.push_back(&CPacketHandler::PT_C2LS_In_Field);
+	m_lpfp.push_back(&CPacketHandler::PT_CSLS_Dummy_In_Field);
 }
 
 CPacketHandler::~CPacketHandler()
 {
-	if (m_lpfp != nullptr) { delete m_lpfp; m_lpfp = nullptr; }
 }
 
-int CPacketHandler::Handle(CUser* _pUser, char* _buffer)
+int CPacketHandler::Handle(CUser* _pUser, PACKET* _packet)
 {
-	u_short size = *(u_short*)_buffer;
-	_buffer += sizeof(u_short);
-	u_short type = *(u_short*)_buffer;
-	_buffer += sizeof(u_short);
+	(this->*m_lpfp[_packet->type])(_pUser, _packet);
 
-	assert(size > 0);
-
-	(this->*m_lpfp[type])(_pUser, _buffer);
-
-	return size;
+	return _packet->size;
 }
 
-void CPacketHandler::PT_C2LS_Test(CUser* _pUser, char* _buffer)
+void CPacketHandler::PT_C2LS_Test(CUser* _pUser, PACKET* _packet)
 {
 	_pUser->SendPacket_Test();
 }
 
-void CPacketHandler::PT_C2LS_Login(CUser* _pUser, char* _buffer)
+void CPacketHandler::PT_C2LS_Login(CUser* _pUser, PACKET* _packet)
 {
-	wchar_t id[30] = {0,};
-	wchar_t pw[30] = {0,};
-	int id_Len = *(u_short*)_buffer;
-	_buffer += sizeof(u_short);
-	memcpy(id, _buffer, id_Len);
-	_buffer += id_Len;
-	int pw_Len = *(u_short*)_buffer;
-	_buffer += sizeof(u_short);
-	memcpy(pw, _buffer, pw_Len);
-
-	int ret = CODBCManager::GetInstance()->SelectAccount(id, pw);
+	C2LS_LOGIN* buffer = reinterpret_cast<C2LS_LOGIN*>(_packet);
 	
-	PACKET_LOGIN packet(sizeof(PACKET_LOGIN), CS_PT_LOGIN, static_cast<u_short>(ret));
+	int ret = CODBCManager::GetInstance()->SelectAccount(_pUser->GetKey(), buffer->id, buffer->pw);
 
-	_pUser->Send(reinterpret_cast<char*>(&packet), sizeof(PACKET_LOGIN));
+	if (ret != 0)
+	{
+		LKH::sharedPtr<PACKET> WSPacket = new LS2WS_PACKET(static_cast<u_short>(_pUser->GetKey()));
 
-	if (ret <= 0) return;
-	_pUser->SetInfo(id);
+		CFieldConnection::GetInstance()->Send(WSPacket, WSPacket.get()->size); // world
 
-	sCharacterList info;
+		_pUser->SetInfo(buffer->id);
+	}
 
-	CODBCManager::GetInstance()->SelectCharacterList(id, info);
-
-	PACKET_CHARACTERLIST characterPacket(sizeof(PACKET_CHARACTERLIST), CS_PT_CHARACTERLIST, static_cast<u_short>(ret), info);
-	_pUser->Send(reinterpret_cast<char*>(&characterPacket), sizeof(PACKET_CHARACTERLIST));
+	LKH::sharedPtr<PACKET> packet = new PACKET_LOGIN(static_cast<u_short>(ret), static_cast<u_short>(_pUser->GetKey()), buffer->id);
+	_pUser->Send(packet, sizeof(PACKET_LOGIN));
 }
 
-void CPacketHandler::PT_C2LS_Check_ID(CUser* _pUser, char* _buffer)
+void CPacketHandler::PT_C2LS_Check_ID(CUser* _pUser, PACKET* _packet)
 {
-	wchar_t id[30] = { 0, };
-	int id_Len = *(u_short*)_buffer;
-	_buffer += sizeof(u_short);
-	memcpy(id, _buffer, id_Len);
+	C2LS_CHECK_ID* buffer = reinterpret_cast<C2LS_CHECK_ID*>(_packet);
 
-	int ret = CODBCManager::GetInstance()->SelectID(id);
+	int ret = CODBCManager::GetInstance()->SelectID(buffer->id);
 
-	PACKET_CREATE_ACCOUNT packet(sizeof(PACKET_CREATE_ACCOUNT), CS_PT_CHECK_ID, static_cast<u_short>(ret));
+	LKH::sharedPtr<PACKET> packet = new PACKET_CHECK_ID(static_cast<u_short>(ret));
 
-	_pUser->Send(reinterpret_cast<char*>(&packet), sizeof(PACKET_CREATE_ACCOUNT));
+	_pUser->Send(packet, sizeof(PACKET_CHECK_ID));
 }
 
-void CPacketHandler::PT_C2LS_CreateAccount(CUser* _pUser, char* _buffer)
+void CPacketHandler::PT_C2LS_CreateAccount(CUser* _pUser, PACKET* _packet)
 {
-	wchar_t id[30] = { 0, };
-	wchar_t pw[30] = { 0, };
-	int id_Len = *(u_short*)_buffer;
-	_buffer += sizeof(u_short);
-	memcpy(id, _buffer, id_Len);
-	_buffer += id_Len;
-	int pw_Len = *(u_short*)_buffer;
-	_buffer += sizeof(u_short);
-	memcpy(pw, _buffer, pw_Len);
+	C2LS_CREATE_ACCOUNT* buffer = reinterpret_cast<C2LS_CREATE_ACCOUNT*>(_packet);
 
-	int ret = CODBCManager::GetInstance()->CreateAccount(id, pw);
+	int ret = CODBCManager::GetInstance()->CreateAccount(buffer->id, buffer->pw);
 
-	PACKET_CREATE_ACCOUNT packet(sizeof(PACKET_CREATE_ACCOUNT), CS_PT_CREATE_ACCOUNT, static_cast<u_short>(ret));
+	LKH::sharedPtr<PACKET> packet = new PACKET_CREATE_ACCOUNT(static_cast<u_short>(ret));
 
-	_pUser->Send(reinterpret_cast<char*>(&packet), sizeof(PACKET_CREATE_ACCOUNT));
+	_pUser->Send(packet, sizeof(PACKET_CREATE_ACCOUNT));
 }
 
-void CPacketHandler::PT_C2LS_CreateCharacter(CUser* _pUser, char* _buffer)
+
+void CPacketHandler::PT_C2LS_In_Field(CUser* _pUser, PACKET* _packet)
 {
-	int type = *(u_short*)_buffer;
-	_buffer += sizeof(u_short);
-	int nameLen = *(u_short*)_buffer;
-	_buffer += sizeof(u_short);
-
-	wchar_t name[16] = { 0, };
-	memcpy(name, _buffer, nameLen);
-
-	sCharacterList info;
-	CODBCManager* pODBCManager = CODBCManager::GetInstance();
-
-	int ret = pODBCManager->CreateCharacter(_pUser->GetId(), name, type);
-	if (ret <= 0) return;
-	ret = pODBCManager->SelectCharacterList(_pUser->GetId(), info);
-
-	PACKET_CHARACTERLIST packet(sizeof(PACKET_CHARACTERLIST), CS_PT_UPDATE_CHARACTERLIST, static_cast<u_short>(ret), info);
-
-	_pUser->Send(reinterpret_cast<char*>(&packet), sizeof(PACKET_CHARACTERLIST));
-}
-
-void CPacketHandler::PT_C2LS_DeleteCharacter(CUser* _pUser, char* _buffer)
-{
-	int nameLen = *(u_short*)_buffer;
-	_buffer += sizeof(u_short);
-
-	wchar_t name[28] = { 0, };
-	memcpy(name, _buffer, nameLen);
-
-	int ret;
-
-	sCharacterList info;
-	CODBCManager* pODBCManager = CODBCManager::GetInstance();
-
-	ret = pODBCManager->DeleteCharacter(_pUser->GetId(), name);
-	if (ret <= 0) return;
-	ret = pODBCManager->SelectCharacterList(_pUser->GetId(), info);
-
-	PACKET_CHARACTERLIST packet(sizeof(PACKET_CHARACTERLIST), CS_PT_UPDATE_CHARACTERLIST, static_cast<u_short>(ret), info);
-
-	_pUser->Send(reinterpret_cast<char*>(&packet), sizeof(PACKET_CHARACTERLIST));
-}
-
-void CPacketHandler::PT_C2LS_In_Field(CUser* _pUser, char* _buffer)
-{
-	// ODBC에서 key값으로 캐릭터 정보를 받아와서 
-	int len = *(u_short*)_buffer;
-	_buffer += sizeof(u_short);
-
-	wchar_t name[28] = { 0, };
-	memcpy(name, _buffer, len);
+	C2LS_IN_FIELD* buffer = reinterpret_cast<C2LS_IN_FIELD*>(_packet);
 
 	sCharacterInfo characterInfo;
-	int ret = CODBCManager::GetInstance()->SelectCharacterInfo(name, characterInfo);
+	int ret = 0;// CODBCManager::GetInstance()->SelectCharacterInfo(buffer->name, characterInfo);
 
-	if (ret <= 0) return;
+	CUserManager::GetInstance()->Add(buffer->name, _pUser);
 
-	PACKET_FS_IN_FIELD FSPacket(sizeof(PACKET_FS_IN_FIELD), 0, sizeof(characterInfo.name), characterInfo);
+	LKH::sharedPtr<PACKET> FSPacket = new PACKET_LS2FS_IN_FIELD(sizeof(characterInfo.name), characterInfo);
 
-	CFieldConnection::GetInstance()->Send(reinterpret_cast<char*>(&FSPacket), sizeof(PACKET_FS_IN_FIELD));
-
-	PACKET_IN_FIELD packet(sizeof(PACKET_IN_FIELD), CS_PT_IN_FIELD, len, characterInfo.name);
-	_pUser->Send(reinterpret_cast<char*>(&packet), sizeof(PACKET_IN_FIELD));
+	CFieldConnection::GetInstance()->Send(FSPacket, sizeof(PACKET_LS2FS_IN_FIELD));
+	
+	/*LKH::sharedPtr<PACKET> packet = new PACKET_IN_FIELD(characterInfo.name);
+	_pUser->Send(packet, sizeof(PACKET_IN_FIELD));*/
 }
 
-void CPacketHandler::PT_C2LS_DoubleCheck(CUser* _pUser, char* _buffer)
+
+
+void CPacketHandler::PT_CSLS_Dummy_In_Field(CUser* _pUser, PACKET* _packet)
 {
-	wchar_t name[28] = { 0, };
-	int name_Len = *(u_short*)_buffer;
-	_buffer += sizeof(u_short);
-	memcpy(name, _buffer, name_Len);
-	_buffer += name_Len;
+	//C2LS_DUMMY_IN_FIELD* packet = reinterpret_cast<C2LS_DUMMY_IN_FIELD*>(_packet);
 
-	int ret = CODBCManager::GetInstance()->DoubleCheck(name);
-	// 중복이면 1 중복이 아니면 0을 리턴한다.
-	PACKET_DOUBLE_CHECK packet(sizeof(PACKET_DOUBLE_CHECK), CS_PT_DOUBLE_CHECK, static_cast<u_short>(ret));
+	//sCharacterInfo characterInfo;
+	//int ret = 0;// CODBCManager::GetInstance()->SelectCharacterInfo(packet->name, characterInfo);
+	//characterInfo.position = packet->position;
 
-	_pUser->Send(reinterpret_cast<char*>(&packet), sizeof(PACKET_DOUBLE_CHECK));
+	//CUserManager::GetInstance()->Add(packet->name, _pUser);
+
+	//LKH::sharedPtr<PACKET> FSPacket = new PACKET_LS2FS_IN_FIELD(sizeof(characterInfo.name), characterInfo);
+
+	//CFieldConnection::GetInstance()->Send(FSPacket, sizeof(PACKET_LS2FS_IN_FIELD));
+
+	//LKH::sharedPtr<PACKET> C2Packet = new PACKET_IN_FIELD(characterInfo.name);
+	//_pUser->Send(C2Packet, sizeof(PACKET_IN_FIELD));
 }

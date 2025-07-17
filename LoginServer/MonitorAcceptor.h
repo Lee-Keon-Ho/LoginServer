@@ -1,11 +1,11 @@
 #pragma once
 #include "../NetCore/TAcceptor.h"
 
-class CPrivateAcceptor : public CTAcceptor
+class CMonitorAcceptor : public CTAcceptor
 {
 public:
-	CPrivateAcceptor(PCSTR _ip, u_short _port);
-	~CPrivateAcceptor();
+	CMonitorAcceptor(PCSTR _ip, u_short _port);
+	~CMonitorAcceptor();
 
 	void Handle(ACCEPT_SOCKET_INFO& _info) override;
 };

@@ -1,5 +1,6 @@
 #include "privateAcceptor.h"
 #include "FieldConnection.h"
+
 CPrivateAcceptor::CPrivateAcceptor(PCSTR _ip, u_short _port) :
 	CTAcceptor(_ip, _port)
 {
@@ -10,7 +11,7 @@ CPrivateAcceptor::~CPrivateAcceptor()
 {
 }
 
-void CPrivateAcceptor::Handle(ACCEPT_SOCKET_INFO _socket)
+void CPrivateAcceptor::Handle(ACCEPT_SOCKET_INFO& _info) // ¼öÁ¤
 {
-	CFieldConnection::GetInstance()->SetFieldSockeInfo(_socket);
+	CFieldConnection::GetInstance()->SetFieldSockeInfo(_info);
 }

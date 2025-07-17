@@ -16,6 +16,9 @@
     <Filter Include="소스 파일\AppSub">
       <UniqueIdentifier>{b4bad43e-0701-4564-80f8-03bad3806337}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\DB">
+      <UniqueIdentifier>{f61edb1d-d44f-4f2d-8a87-a0ab54f0f2dd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LoginApp.cpp">
@@ -36,23 +39,29 @@
     <ClCompile Include="LoginAcceptor.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Account.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="ODBC.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="ODBCPool.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="ODBCManager.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="privateAcceptor.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="FieldConnection.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="UserManager.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="MonitorAcceptor.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="MonitorConnection.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ODBC.cpp">
+      <Filter>소스 파일\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="ODBCManager.cpp">
+      <Filter>소스 파일\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="ODBCPool.cpp">
+      <Filter>소스 파일\DB</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -77,18 +86,6 @@
     <ClInclude Include="PacketStruct.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Account.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="ODBCManager.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="ODBC.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="ODBCPool.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="struct.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -97,6 +94,24 @@
     </ClInclude>
     <ClInclude Include="FieldConnection.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="UserManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="MonitorAcceptor.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="MonitorConnection.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ODBC.h">
+      <Filter>소스 파일\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="ODBCManager.h">
+      <Filter>소스 파일\DB</Filter>
+    </ClInclude>
+    <ClInclude Include="ODBCPool.h">
+      <Filter>소스 파일\DB</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

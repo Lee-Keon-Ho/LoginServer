@@ -45,20 +45,19 @@ void CWorkerThread::RunLoop()
 		{
 			if (!GetQueuedCompletionStatus(hIOCP, &bytesTrans, (PULONG_PTR)&bin, (LPOVERLAPPED*)&overlapped, INFINITE))
 			{
-				// 실패를 했으면 io작업중 하나가 실패한 것이니 그것을 확인해야 한다
-				// 확인을 했으면 그것에 맞는 처리를 해줘야한다.
-				printf("Error : %d\n", GetLastError()); // 끊긴거를 100% 알수 없다
+				printf("Error : %d\n", GetLastError()); // 수정 필요
 
 				continue;
 			}
 
 			if (bytesTrans <= 0)
 			{
-				delete overlapped->session;
+				overlapped->session->Delete();
 			}
 			else
 			{
-				overlapped->session->OnRecv(bytesTrans);
+				if (overlapped->flag == static_cast<int>(eFlag::RECV)) overlapped->session->OnRecv(bytesTrans);
+				else overlapped->session->OnSend();
 			}
 		}
 		catch (std::exception& e)

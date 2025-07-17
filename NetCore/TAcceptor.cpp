@@ -21,11 +21,11 @@ bool CTAcceptor::Start()
 
 void CTAcceptor::RunLoop()
 {
-	ACCEPT_SOCKET_INFO socketInfo;
 	int size = sizeof(sockaddr_in);
 
 	while (1)
 	{
+		ACCEPT_SOCKET_INFO socketInfo;
 		socketInfo.socket = ::accept(m_listener.GetSokcet(), (sockaddr*)&socketInfo.addr, &size);
 
 		Handle(socketInfo);

@@ -1,5 +1,8 @@
 #pragma once
 
+constexpr int Buffer_MAX = 65530;
+constexpr int tempBuffer_MAX = 100;
+
 class CRingBuffer
 {
 private:
@@ -11,16 +14,16 @@ private:
 	char* m_pWrite;
 	char* m_pBufferEnd;
 
-	int m_remainDataSize;
+	size_t m_remainDataSize;
 public:
-	CRingBuffer(int _bufferSize = 65530);
+	CRingBuffer(int _bufferSize = Buffer_MAX);
 	virtual ~CRingBuffer();
 
-	int GetWriteBufferSize();	
+	size_t GetWriteBufferSize();	
 
 	void Write(int _size);
 
-	int GetReadSize();
+	size_t GetReadSize();
 
 	void Read(int _size);
 
@@ -28,7 +31,7 @@ public:
 
 	char* GetBuffer() { return m_buffer; }
 
-	int GetRemainDataSize() { return m_remainDataSize; }
+	size_t GetRemainDataSize() { return m_remainDataSize; }
 
 	char* GetEndBufferAddr() { return m_pBufferEnd; }
 
@@ -36,7 +39,7 @@ public:
 
 	char* GetReadBuffer() { return m_pRead; }
 
-	int GetRemainSize_EndBuffer(const char* _pBuffer) { return (int)(m_pBufferEnd - _pBuffer); }
+	size_t GetRemainSize_EndBuffer(const char* _pBuffer) { return (int)(m_pBufferEnd - _pBuffer); }
 
 	char* GetPacketBuffer();
 };

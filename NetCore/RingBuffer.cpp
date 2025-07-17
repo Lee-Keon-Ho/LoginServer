@@ -1,7 +1,9 @@
 #include "RingBuffer.h"
 #include <memory>
 
-CRingBuffer::CRingBuffer(int _bufferSize) : m_size(_bufferSize), m_remainDataSize(0)
+CRingBuffer::CRingBuffer(int _bufferSize) : 
+	m_size(_bufferSize), 
+	m_remainDataSize(0)
 {
 	m_buffer = new char[m_size];
 	m_tempBuffer = new char[m_size];
@@ -14,17 +16,17 @@ CRingBuffer::CRingBuffer(int _bufferSize) : m_size(_bufferSize), m_remainDataSiz
 
 CRingBuffer::~CRingBuffer()
 {
-	if (m_tempBuffer) { delete m_tempBuffer; }
-	if (m_buffer) { delete m_buffer; }
+	if (m_tempBuffer) { delete m_tempBuffer; m_tempBuffer = nullptr; }
+	if (m_buffer) { delete m_buffer; m_buffer = nullptr; }
 }
 
-int CRingBuffer::GetWriteBufferSize()
+size_t CRingBuffer::GetWriteBufferSize()
 {
 	if (IsFull()) return 0;
 
 	if (m_pWrite >= m_pRead) return GetRemainSize_EndBuffer(m_pWrite);
 
-	return (int)(m_pRead - m_pWrite);
+	return static_cast<size_t>(m_pRead - m_pWrite);
 }
 
 void CRingBuffer::Write(int _size)
@@ -35,17 +37,17 @@ void CRingBuffer::Write(int _size)
 	if (m_pWrite == m_pBufferEnd) m_pWrite = m_buffer;
 }
 
-int CRingBuffer::GetReadSize()
+size_t CRingBuffer::GetReadSize()
 {
 	if (m_remainDataSize == 0) return 0;
 
-	int size;
+	size_t size;
 
 	if (GetRemainSize_EndBuffer(m_pRead) == 1)
 	{
 		if (m_remainDataSize == 1) return 0;
 
-		char tempBuf[100];
+		char tempBuf[tempBuffer_MAX];
 		memcpy(tempBuf, m_pRead, 1);
 		memcpy(tempBuf + 1, m_buffer, 1);
 
@@ -62,7 +64,7 @@ void CRingBuffer::Read(int _size)
 {
 	if (m_remainDataSize >= _size)
 	{
-		int endBuf_Read = GetRemainSize_EndBuffer(m_pRead);
+		size_t endBuf_Read = GetRemainSize_EndBuffer(m_pRead);
 
 		if (endBuf_Read < _size)
 		{
@@ -83,8 +85,8 @@ void CRingBuffer::Read(int _size)
 char* CRingBuffer::GetPacketBuffer()
 {
 	char* readBuffer = m_pRead;
-	int read_EndBuf = GetRemainSize_EndBuffer(readBuffer);
-	int readSize = GetReadSize();
+	size_t read_EndBuf = GetRemainSize_EndBuffer(readBuffer);
+	size_t readSize = GetReadSize();
 
 	if (readSize > read_EndBuf)
 	{

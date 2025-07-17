@@ -144,6 +144,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Lock.h" />
+    <ClInclude Include="sharedPtr.h" />
     <ClInclude Include="TAcceptor.h" />
     <ClInclude Include="Thread.h" />
     <ClInclude Include="IOCP.h" />

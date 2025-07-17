@@ -1,10 +1,11 @@
 #pragma once
 #include "workerThread.h"
+#include <memory>
 #include <vector>
 class CThreadManager
 {
 public:
-	typedef std::vector<CWorkerThread*> thread_t;
+	using thread_t = std::vector<std::unique_ptr<CWorkerThread>>;
 
 private:
 	thread_t m_thread;

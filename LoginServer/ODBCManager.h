@@ -7,8 +7,6 @@
 #include <sqlext.h>
 #include "ODBCPool.h"
 
-using namespace std;
-
 class CODBCManager
 {
 public:
@@ -24,17 +22,11 @@ private:
 
 
 private:
-	CODBCPool* m_connectionPool;
+	std::unique_ptr<CODBCPool> m_pConnectionPool;
 
 public:
 	bool Initialize(SQLWCHAR* _db);
-	int SelectAccount(SQLWCHAR* _id, SQLWCHAR* _pw);
+	int SelectAccount(int& _key, const SQLWCHAR* _id, const SQLWCHAR* _pw);
 	int SelectID(SQLWCHAR* _id);
 	int CreateAccount(SQLWCHAR* _id, SQLWCHAR* _pw);
-	int CharacterInfo(int _key, sCharacterList& _info);
-	int SelectCharacterList(wchar_t* _id, sCharacterList& _info);
-	int CreateCharacter(wchar_t* _id, wchar_t* _name, int _type);
-	int DeleteCharacter(wchar_t* _id, wchar_t* _name);
-	int DoubleCheck(wchar_t* _name);
-	int SelectCharacterInfo(wchar_t* _name, sCharacterInfo& _characterInfo);
 };

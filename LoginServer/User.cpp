@@ -1,20 +1,19 @@
 #include "User.h"
 #include "PacketHandler.h"
 #include "PacketStruct.h"
+#include "UserManager.h"
 
 CUser::CUser()
 {
 }
 
-CUser::CUser(ACCEPT_SOCKET_INFO _socketInfo) :
+CUser::CUser(ACCEPT_SOCKET_INFO& _socketInfo) :
 	CSession(_socketInfo), m_id(nullptr)
 {
-	m_id = new wchar_t[30];
+	m_id = std::make_unique<wchar_t[]>(id_max_size);
 
-	char* packet = new char[4];
-	memset(packet, 0, 4);
-	send(m_socket_info.socket, packet, 4, 0);
-	delete[] packet;
+	LKH::sharedPtr<PACKET> packet = new PACKET(sizeof(PACKET), 0);
+	Send(packet, sizeof(PACKET));
 }
 
 CUser::~CUser()
@@ -26,7 +25,7 @@ int CUser::PacketHandle()
 	char* readBuffer = GetPacketBuffer();
 	if (readBuffer == nullptr) return 0;
 
-	int readSize = CPacketHandler::GetInstance()->Handle(this, readBuffer);
+	int readSize = CPacketHandler::GetInstance()->Handle(this, reinterpret_cast<PACKET*>(readBuffer));
 
 	if (readSize > 0)
 	{
@@ -37,19 +36,29 @@ int CUser::PacketHandle()
 	return 0;
 }
 
-void CUser::SetInfo(wchar_t* _id)
+void CUser::Delete()
 {
-	memcpy(m_id, _id, 30);
+	CUserManager::GetInstance()->Del(m_id.get());
+}
+
+void CUser::SetInfo(const wchar_t* _id)
+{
+	memcpy(m_id.get(), _id, sizeof(wchar_t) * id_max_size);
 }
 
 void CUser::SendPacket_Test()
 {
-	PACKET packet(sizeof(PACKET), 0);
+	LKH::sharedPtr<PACKET> packet = new PACKET(sizeof(PACKET), 0);
 
-	Send(reinterpret_cast<char*>(&packet), sizeof(PACKET));
+	Send(packet, sizeof(PACKET));
 }
 
 wchar_t* CUser::GetId()
 {
-	return m_id;
+	return m_id.get();
+}
+
+int& CUser::GetKey()
+{
+	return m_key;
 }

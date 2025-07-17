@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <exception>
+#include <assert.h>
 
 CThread::CThread()
 {
@@ -16,11 +17,8 @@ CThread::~CThread()
 bool CThread::Start()
 {
 	HANDLE threadId = (HANDLE)_beginthreadex(NULL, 0, &CThread::ThreadFunc, this, 0, NULL);
-	if (threadId == 0)
-	{
-		printf("Thread Error\n");
-		return false;
-	}
+
+	assert(threadId != 0);
 	
 	return true;
 }

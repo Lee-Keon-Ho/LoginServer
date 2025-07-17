@@ -15,5 +15,5 @@ public:
 	bool Start();
 	void RunLoop();
 
-	virtual void Handle(ACCEPT_SOCKET_INFO _socket) = 0;
+	virtual void Handle(ACCEPT_SOCKET_INFO& _socket) = 0;
 };
